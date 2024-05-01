@@ -79,3 +79,9 @@ tuner.search(
     # The logs will be write to "/tmp/tb_logs".
     callbacks=[keras.callbacks.TensorBoard("/tmp/tb_logs")],
 )
+
+
+# TODO:
+# - Dockerfile
+# - POO
+# - Prepare use case 
