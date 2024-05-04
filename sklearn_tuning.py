@@ -27,7 +27,7 @@ def build_hypermodel(hp):
         
         case "decision_tree":
             return DecisionTreeClassifier(
-                criterion=hp.Choice("dense_activation", values=["gini", "entropy", "log_loss"])
+                criterion=hp.Choice("dense_activation", values=["gini", "entropy", "log_loss"]),
                 max_depth=hp.Int("max_deptth", 4, 10, step=1)
             )
 
@@ -45,8 +45,8 @@ if __name__ == "__main__":
     X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2)
 
     optimizer = keras_tuner.oracles.BayesianOptimizationOracle(
-            objective=keras_tuner.Objective('score', 'max'),
-            max_trials=10
+            objective=keras_tuner.Objective("score", "max"),
+            max_trials=100
         )
 
     tuner = keras_tuner.tuners.SklearnTuner(
