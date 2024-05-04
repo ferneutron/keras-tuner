@@ -3,55 +3,45 @@ import keras_tuner
 import keras
 from keras import layers
 
-(x_train, y_train), (x_test, y_test) = keras.datasets.mnist.load_data()
-# Normalize the pixel values to the range of [0, 1].
-x_train = x_train.astype("float32") / 255
-x_test = x_test.astype("float32") / 255
-# Add the channel dimension to the images.
-x_train = np.expand_dims(x_train, -1)
-x_test = np.expand_dims(x_test, -1)
-# Print the shapes of the data.
-print(x_train.shape)
-print(y_train.shape)
-print(x_test.shape)
-print(y_test.shape)
+KERAS_TRIALS_DIR = "."
+KERAS_PROJECT_NAME = "keras_hp"
+KERAS_PROJECT_TENSORBOARD = "tensorboard"
 
 def build_model(hp):
-    inputs = keras.Input(shape=(28, 28, 1))
-    # Model type can be MLP or CNN.
+    
     model_type = hp.Choice("model_type", ["mlp", "cnn"])
-    x = inputs
-    if model_type == "mlp":
-        x = layers.Flatten()(x)
-        # Number of layers of the MLP is a hyperparameter.
-        for i in range(hp.Int("mlp_layers", 1, 3)):
-            # Number of units of each layer are
-            # different hyperparameters with different names.
-            x = layers.Dense(
-                units=hp.Int(f"units_{i}", 32, 128, step=32),
-                activation="relu",
-            )(x)
-    else:
-        # Number of layers of the CNN is also a hyperparameter.
-        for i in range(hp.Int("cnn_layers", 1, 3)):
-            x = layers.Conv2D(
-                hp.Int(f"filters_{i}", 32, 128, step=32),
-                kernel_size=(3, 3),
-                activation="relu",
-            )(x)
-            x = layers.MaxPooling2D(pool_size=(2, 2))(x)
-        x = layers.Flatten()(x)
 
-    # A hyperparamter for whether to use dropout layer.
+    inputs = keras.Input(shape=(28, 28, 1))
+    x = inputs
+
+    match model_type:
+        case "mlp":
+            x = layers.Flatten()(x)
+            for layer in range(hp.Int("mlp_layers", 1, 3)):
+                x = layers.Dense(
+                    units=hp.Int(f"units_{layer}", 32, 128, step=32),
+                    activation=hp.Choice("activation", values=["relu", "tanh"]),
+                )(x)
+
+        case "cnn":
+            for layer in range(hp.Int("cnn_layers", 1, 3)):
+                x = layers.Conv2D(
+                    hp.Int(f"filters_{layer}", 32, 128, step=32),
+                    kernel_size=(3, 3),
+                    activation=hp.Choice("activation", values=["relu", "tanh"]),
+                )(x)
+                x = layers.MaxPooling2D(pool_size=(2, 2))(x)
+            x = layers.Flatten()(x)
+
+        case _:
+            return None
+
     if hp.Boolean("dropout"):
         x = layers.Dropout(0.5)(x)
 
-    # The last layer contains 10 units,
-    # which is the same as the number of classes.
     outputs = layers.Dense(units=10, activation="softmax")(x)
     model = keras.Model(inputs=inputs, outputs=outputs)
 
-    # Compile the model.
     model.compile(
         loss="sparse_categorical_crossentropy",
         metrics=["accuracy"],
@@ -60,28 +50,27 @@ def build_model(hp):
     return model
 
 
-tuner = keras_tuner.RandomSearch(
-    build_model,
-    max_trials=10,
-    # Do not resume the previous search in the same directory.
-    overwrite=True,
-    objective="val_accuracy",
-    # Set a directory to store the intermediate results.
-    directory="/tmp/tb",
-)
+if __name__ == "__main__":
+    (x_train, y_train), (x_test, y_test) = keras.datasets.mnist.load_data()
 
-tuner.search(
-    x_train,
-    y_train,
-    validation_split=0.2,
-    epochs=2,
-    # Use the TensorBoard callback.
-    # The logs will be write to "/tmp/tb_logs".
-    callbacks=[keras.callbacks.TensorBoard("/tmp/tb_logs")],
-)
+    x_train = x_train.astype("float32") / 255
+    x_test = x_test.astype("float32") / 255
 
+    x_train = np.expand_dims(x_train, -1)
+    x_test = np.expand_dims(x_test, -1)
 
-# TODO:
-# - Dockerfile
-# - POO
-# - Prepare use case 
+    tuner = keras_tuner.RandomSearch(
+        build_model,
+        max_trials=10,
+        objective="val_accuracy",
+        directory=KERAS_TRIALS_DIR,
+        project_name=KERAS_PROJECT_NAME
+    )
+
+    tuner.search(
+        x_train,
+        y_train,
+        validation_split=0.2,
+        epochs=2,
+        callbacks=[keras.callbacks.TensorBoard(KERAS_PROJECT_TENSORBOARD)],
+    )

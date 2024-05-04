@@ -10,10 +10,8 @@ from sklearn.metrics import accuracy_score
 from sklearn.model_selection import StratifiedKFold
 from sklearn.model_selection import train_test_split
 
-
-SKLERAN_TRIALS_DIR = "."
+SKLEARN_TRIALS_DIR = "."
 SKLEARN_PROJECT_NAME = "sklearn_hp"
-
 
 def build_hypermodel(hp):
     model_type = hp.Choice("model_type", values=["random_forest", "decision_tree", "ridge",])
@@ -54,7 +52,7 @@ if __name__ == "__main__":
         hypermodel=build_hypermodel,
         scoring=make_scorer(accuracy_score),
         cv=StratifiedKFold(5),
-        directory=SKLERAN_TRIALS_DIR,
+        directory=SKLEARN_TRIALS_DIR,
         project_name=SKLEARN_PROJECT_NAME
     )
 
