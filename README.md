@@ -3,7 +3,7 @@
 This repository contains two implementations on how to use `keras-tuner` for hyperparameter tuning on `keras`-based and `sklearn`-based models.
 
 
-[![alt text](img/img.jpg)](https://youtu.be/OUOpxEwa2Ek?si=IYk53ItHfjvspod5)
+[![alt text](img.jpg)](https://youtu.be/OUOpxEwa2Ek?si=IYk53ItHfjvspod5)
 
 
 ## How to use it?
